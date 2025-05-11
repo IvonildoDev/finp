@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - Finanças Pessoais</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <h1><i class="fas fa-wallet"></i> Finanças Pessoais</h1>
+            <div class="user-info">
+                <span id="username-display"><i class="fas fa-user-circle"></i> Usuário</span>
+                <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Conteúdo do Dashboard -->
+        <div class="summary-cards">
+            <div class="card income-card">
+                <h2>Receitas</h2>
+                <p class="amount" id="total-income">R$ 0,00</p>
+            </div>
+            <div class="card expense-card">
+                <h2>Despesas</h2>
+                <p class="amount" id="total-expenses">R$ 0,00</p>
+            </div>
+            <div class="card balance-card">
+                <h2>Saldo</h2>
+                <p class="amount" id="balance">R$ 0,00</p>
+            </div>
+        </div>
+
+        <!-- Novo componente: Avisos de Vencimento -->
+        <div class="due-dates-container">
+            <h2><i class="fas fa-calendar-alt"></i> Próximos Vencimentos</h2>
+            <div class="due-dates-filters">
+                <button class="filter-btn active" data-days="7">7 dias</button>
+                <button class="filter-btn" data-days="15">15 dias</button>
+                <button class="filter-btn" data-days="30">30 dias</button>
+            </div>
+            <div class="due-dates-list" id="due-dates-list">
+                <!-- Avisos de vencimento serão adicionados aqui -->
+                <div class="loading-indicator">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Formulário para adicionar transações -->
+        <div class="add-transaction">
+            <h2>Nova Transação</h2>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label for="description">Descrição</label>
+                    <input type="text" id="description" required>
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Valor (R$)</label>
+                    <input type="number" id="amount" step="0.01" required>
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+                <div class="form-group">
+                    <label for="type">Tipo</label>
+                    <select id="type" required>
+                        <option value="income">Receita</option>
+                        <option value="expense">Despesa</option>
+                    </select>
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+                <div class="form-group">
+                    <label for="date">Data</label>
+                    <input type="date" id="date" required>
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+                <!-- Novo campo: Data de Vencimento -->
+                <div class="form-group">
+                    <label for="dueDate">
+                        <span>Data de Vencimento</span>
+                        <span class="optional-label">(opcional)</span>
+                    </label>
+                    <input type="date" id="dueDate">
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status">
+                        <option value="pending">Pendente</option>
+                        <option value="paid">Pago</option>
+                    </select>
+                    <div class="edit-indicator"><i class="fas fa-pen"></i></div>
+                </div>
+
+                <!-- Botões de edição do formulário -->
+                <div class="edit-buttons">
+                    <button type="button" class="btn btn-edit" id="editBtn">
+                        <i class="fas fa-edit btn-icon"></i> Editar
+                    </button>
+                    <button type="button" class="btn btn-clear" id="clearBtn">
+                        <i class="fas fa-eraser btn-icon"></i> Limpar
+                    </button>
+                    <button type="button" class="btn btn-cancel" id="cancelBtn">
+                        <i class="fas fa-times btn-icon"></i> Cancelar
+                    </button>
+                </div>
+
+                <button type="submit">Adicionar</button>
+            </form>
+        </div>
+
+        <!-- Lista de transações -->
+        <div class="transactions">
+            <h2>Transações Recentes</h2>
+            <div class="transactions-list" id="transactions-list">
+                <!-- As transações serão adicionadas dinamicamente aqui -->
+            </div>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+
+    <button class="add-transaction-fab" id="quickAddBtn">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <nav class="mobile-nav">
+        <a href="#" class="mobile-nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="mobile-nav-item" id="mobileAddBtn">
+            <i class="fas fa-plus-circle"></i>
+            <span>Adicionar</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Vencimentos</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-chart-pie"></i>
+            <span>Relatórios</span>
+        </a>
+    </nav>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-wallet"></i> Finanças Pessoais
+            </div>
+            <div class="footer-links">
+                <a href="dashboard.html" class="footer-link">Início</a>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Ajuda</a>
+                <a href="#" class="footer-link">Política de Privacidade</a>
+            </div>
+            <div class="footer-copyright">
+                © 2025 Finanças Pessoais | Desenvolvido por <span class="developer-info">Ivonildo Lima</span>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

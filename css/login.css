@@ -1,0 +1,466 @@
+/* Login Page CSS - Versão melhorada com tema verde */
+
+body {
+  background-color: #f3f8f3;
+  background-image: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; /* Alterado para column */
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Adicionado para posicionamento */
+  padding: 40px 0; /* Adicionado espaço para o footer */
+}
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+  padding: 35px;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(126, 192, 128, 0.15);
+  text-align: center;
+  animation: float 0.6s ease-out;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 60px; /* Espaço extra na parte inferior */
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #4CAF50, #81C784, #4CAF50);
+  background-size: 200% 100%;
+  animation: gradient 4s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.login-logo {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 25px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.25);
+  font-size: 40px;
+  transition: transform 0.3s ease;
+}
+
+.login-logo:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+.login-container h1 {
+  color: #2E7D32;
+  font-size: 28px;
+  margin-bottom: 30px;
+  font-weight: 600;
+  position: relative;
+  display: inline-block;
+}
+
+.login-container h1:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #81C784, transparent);
+  border-radius: 2px;
+}
+
+#loginForm {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+  font-size: 15px;
+  transition: color 0.3s;
+}
+
+.form-group:focus-within label {
+  color: #2E7D32;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px 15px;
+  background-color: #f5f5f5;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.form-group input:focus {
+  background-color: #f9f9f9;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.password-field {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  transition: color 0.3s;
+}
+
+.toggle-password:hover {
+  color: #4CAF50;
+}
+
+#loginForm button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+#loginForm button[type="submit"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transition: all 0.6s;
+}
+
+#loginForm button[type="submit"]:hover {
+  background-color: #388E3C;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+}
+
+#loginForm button[type="submit"]:hover::before {
+  left: 100%;
+}
+
+#loginForm button[type="submit"]:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.4);
+}
+
+#loginForm p {
+  margin-top: 25px;
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+}
+
+#loginForm a {
+  color: #4CAF50;
+  font-weight: 600;
+  text-decoration: none;
+  position: relative;
+}
+
+#loginForm a:hover {
+  color: #2E7D32;
+}
+
+#loginForm a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #4CAF50;
+  transform: scaleX(0);
+  transition: transform 0.3s;
+  transform-origin: bottom right;
+}
+
+#loginForm a:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #e53935;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
+  font-size: 14px;
+  border-left: 4px solid #e53935;
+  text-align: left;
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Estilos para mensagem de sessão */
+.session-message {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #ffeeba;
+  text-align: left;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 25px 20px;
+    margin: 0 15px;
+  }
+  
+  .login-logo {
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+  }
+  
+  .login-container h1 {
+    font-size: 24px;
+  }
+}
+
+/* Adicionando estilos para botões de edição ao final do arquivo */
+
+/* Estilos para os botões de edição */
+.edit-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.btn {
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* Botão de editar */
+.btn-edit {
+  background-color: #81C784;
+  color: white;
+  flex: 1;
+}
+
+.btn-edit:hover {
+  background-color: #66BB6A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-edit:active {
+  transform: translateY(0);
+}
+
+/* Botão de limpar */
+.btn-clear {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+  flex: 1;
+}
+
+.btn-clear:hover {
+  background-color: #C8E6C9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.15);
+}
+
+.btn-clear:active {
+  transform: translateY(0);
+}
+
+/* Botão de cancelar */
+.btn-cancel {
+  background-color: #FFEBEE;
+  color: #E53935;
+  border: 1px solid #FFCDD2;
+  flex: 1;
+}
+
+.btn-cancel:hover {
+  background-color: #FFCDD2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 57, 53, 0.15);
+}
+
+.btn-cancel:active {
+  transform: translateY(0);
+}
+
+/* Estado de edição para os campos */
+.form-group.editing input {
+  border-color: #4CAF50;
+  background-color: #FAFFF9;
+}
+
+/* Indicador de edição */
+.edit-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transform: scale(0);
+  transition: transform 0.3s ease;
+}
+
+.form-group.editing .edit-indicator {
+  transform: scale(1);
+}
+
+/* Animação para campos editáveis */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+.form-group.editing input:focus {
+  animation: pulse 1.5s infinite;
+}
+
+/* Footer styling for login page */
+footer {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px 0;
+  box-shadow: 0 -2px 10px rgba(76, 175, 80, 0.3);
+  width: 100%; /* Ocupar toda a largura */
+  position: absolute; /* Posicionamento absoluto */
+  bottom: 0; /* Fixado na parte inferior */
+  left: 0;
+}
+
+/* Responsive footer */
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .footer-links {
+    justify-content: center;
+  }
+}
+
+@media (max-height: 700px) {
+  body {
+    padding: 80px 0; /* Mais espaço em telas menores */
+  }
+  
+  footer {
+    position: relative; /* Mudar para relativo em telas pequenas */
+    margin-top: 40px; /* Adicionar margem em vez de posicionamento absoluto */
+  }
+  
+  .login-container {
+    margin-bottom: 0; /* Remover margem extra */
+  }
+}
