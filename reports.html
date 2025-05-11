@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Finanças Pessoais</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/reports.css">
+    <!-- Adicionar Chart.js para os gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Biblioteca para gerar Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <h1><i class="fas fa-wallet"></i> Finanças Pessoais</h1>
+            <div class="user-info">
+                <span id="username-display"><i class="fas fa-user-circle"></i> Usuário</span>
+                <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container reports-container">
+        <div class="page-title">
+            <h1><i class="fas fa-chart-pie"></i> Relatórios Financeiros</h1>
+            <p>Visualize e analise seus dados financeiros</p>
+        </div>
+
+        <!-- Filtros e controles -->
+        <div class="reports-controls">
+            <div class="time-filter">
+                <label for="time-period">Período:</label>
+                <select id="time-period">
+                    <option value="month">Mês Atual</option>
+                    <option value="lastMonth">Mês Anterior</option>
+                    <option value="quarter">Últimos 3 Meses</option>
+                    <option value="year">Ano Atual</option>
+                    <option value="custom">Personalizado</option>
+                </select>
+            </div>
+
+            <div class="custom-date-range" id="custom-date-range" style="display: none;">
+                <div class="date-input">
+                    <label for="start-date">De:</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="date-input">
+                    <label for="end-date">Até:</label>
+                    <input type="date" id="end-date">
+                </div>
+                <button id="apply-date-range" class="btn-apply">Aplicar</button>
+            </div>
+        </div>
+
+        <!-- Resumo financeiro -->
+        <div class="summary-cards">
+            <div class="card income-card">
+                <h2>Total de Receitas</h2>
+                <p class="amount" id="report-total-income">R$ 0,00</p>
+                <div class="trend up"><i class="fas fa-arrow-up"></i> 12% vs. período anterior</div>
+            </div>
+            <div class="card expense-card">
+                <h2>Total de Despesas</h2>
+                <p class="amount" id="report-total-expenses">R$ 0,00</p>
+                <div class="trend down"><i class="fas fa-arrow-down"></i> 5% vs. período anterior</div>
+            </div>
+            <div class="card balance-card">
+                <h2>Saldo do Período</h2>
+                <p class="amount" id="report-balance">R$ 0,00</p>
+                <div class="trend up"><i class="fas fa-arrow-up"></i> 18% vs. período anterior</div>
+            </div>
+            <div class="card savings-card">
+                <h2>Taxa de Economia</h2>
+                <p class="amount" id="savings-rate">25%</p>
+                <div class="trend neutral"><i class="fas fa-minus"></i> Igual ao período anterior</div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-container">
+            <!-- Gráfico principal: Receitas vs Despesas -->
+            <div class="chart-card main-chart">
+                <h2>Receitas vs Despesas</h2>
+                <div class="chart-wrapper">
+                    <canvas id="income-expense-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Categorias de despesas -->
+            <div class="chart-card">
+                <h2>Despesas por Categoria</h2>
+                <div class="chart-wrapper">
+                    <canvas id="expense-categories-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tendência de saldo -->
+            <div class="chart-card">
+                <h2>Tendência do Saldo</h2>
+                <div class="chart-wrapper">
+                    <canvas id="balance-trend-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Comparação mensal -->
+            <div class="chart-card">
+                <h2>Comparação Mensal</h2>
+                <div class="chart-wrapper">
+                    <canvas id="monthly-comparison-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de transações no período -->
+        <div class="transactions-table-container">
+            <h2>Transações do Período</h2>
+            <div class="table-controls">
+                <div class="search-container">
+                    <input type="text" id="transaction-search" placeholder="Buscar transação...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <select id="table-sort">
+                    <option value="date-desc">Data (mais recente)</option>
+                    <option value="date-asc">Data (mais antiga)</option>
+                    <option value="amount-desc">Valor (maior)</option>
+                    <option value="amount-asc">Valor (menor)</option>
+                </select>
+            </div>
+            <div class="table-wrapper">
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body">
+                        <!-- Transações serão adicionadas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="table-pagination" class="pagination">
+                <!-- Paginação será adicionada via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Exportar relatórios -->
+        <div class="export-section">
+            <h2>Exportar Relatório</h2>
+            <p>Baixe seus dados financeiros nos formatos abaixo:</p>
+            <div class="export-buttons">
+                <button id="export-pdf" class="export-btn pdf">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </button>
+                <button id="export-excel" class="export-btn excel">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </button>
+                <button id="export-csv" class="export-btn csv">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <button class="add-transaction-fab" id="quickAddBtn">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <nav class="mobile-nav">
+        <a href="dashboard.html" class="mobile-nav-item">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="mobile-nav-item" id="mobileAddBtn">
+            <i class="fas fa-plus-circle"></i>
+            <span>Adicionar</span>
+        </a>
+        <a href="#" class="mobile-nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Vencimentos</span>
+        </a>
+        <a href="reports.html" class="mobile-nav-item active">
+            <i class="fas fa-chart-pie"></i>
+            <span>Relatórios</span>
+        </a>
+    </nav>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-wallet"></i> Finanças Pessoais
+            </div>
+            <div class="footer-links">
+                <a href="dashboard.html" class="footer-link">Início</a>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Ajuda</a>
+                <a href="#" class="footer-link">Política de Privacidade</a>
+            </div>
+            <div class="footer-copyright">
+                © 2025 Finanças Pessoais | Desenvolvido por <span class="developer-info">Ivonildo Lima</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+
+</html>
+````
