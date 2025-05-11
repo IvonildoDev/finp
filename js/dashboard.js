@@ -445,26 +445,25 @@ function setupMobileNavigation() {
     const navItems = document.querySelectorAll('.mobile-nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
-            // Remove active class from all
-            navItems.forEach(i => i.classList.remove('active'));
-            // Add active class to clicked item
-            this.classList.add('active');
+            // Modificar para permitir que o link de relatórios funcione
+            const icon = this.querySelector('i').className;
 
-            // If not the add button (which is handled separately)
-            if (this !== mobileAddBtn) {
-                e.preventDefault();
+            if (icon.includes('chart-pie')) {
+                // Permitir comportamento padrão para o botão de relatórios
+                return;
+            }
 
-                // Navigation logic based on icon
-                const icon = this.querySelector('i').className;
+            // Resto do código para outros botões
+            e.preventDefault();
 
-                if (icon.includes('home')) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else if (icon.includes('calendar')) {
-                    document.querySelector('.due-dates-container').scrollIntoView({ behavior: 'smooth' });
-                } else if (icon.includes('chart')) {
-                    // Futura seção de relatórios
-                    alert('Relatórios em breve!');
-                }
+            // Navigation logic based on icon
+            if (icon.includes('home')) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (icon.includes('calendar')) {
+                document.querySelector('.due-dates-container').scrollIntoView({ behavior: 'smooth' });
+            } else if (icon.includes('chart')) {
+                // Futura seção de relatórios
+                alert('Relatórios em breve!');
             }
         });
     });
@@ -509,5 +508,20 @@ document.addEventListener('click', function (e) {
         if (!item.contains(e.target)) {
             item.classList.remove('swiped');
         }
+    });
+});
+
+// Adicionar ao final do arquivo dashboard.js
+
+// Garantir navegação correta para relatórios
+document.addEventListener('DOMContentLoaded', function() {
+    const reportLink = document.querySelector('.mobile-nav-item .fa-chart-pie').parentElement;
+    
+    reportLink.addEventListener('click', function(e) {
+        // Previnir manipuladores padrão que podem estar interferindo
+        e.stopPropagation();
+        
+        // Redirecionar para a página de relatórios
+        window.location.href = 'reports.html';
     });
 });

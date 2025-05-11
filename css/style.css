@@ -231,3 +231,11 @@ h2, h3, h4, h5, h6 {
     gap: 15px 20px;
   }
 }
+
+/* Adicionar ao seu CSS */
+.mobile-nav-item {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 10;
+}
