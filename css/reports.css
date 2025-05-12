@@ -467,3 +467,45 @@ tbody tr:hover {
     font-size: 1.5rem;
   }
 }
+
+/* Correções específicas para Chrome em dispositivos Android */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  .chart-wrapper {
+    height: auto !important;
+    min-height: 250px;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+  
+  /* Forçar redrawing dos elementos */
+  .summary-cards, .chart-card, .transactions-table-container {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
+/* Ajustes para o Chrome Mobile */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio:0) {
+  /* Melhorar performance de scroll */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ajustar tamanho dos gráficos para evitar problemas de renderização */
+  .charts-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chart-card {
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+}

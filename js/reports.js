@@ -13,28 +13,48 @@ document.addEventListener('DOMContentLoaded', function () {
     const usernameDisplay = document.getElementById('username-display');
     if (usernameDisplay) {
         usernameDisplay.textContent = user.username || 'Usuário';
-
     }
 
     // Inicializar relatórios
     initializeReports();
 });
 
+// Detectar navegador Chrome em dispositivos móveis
+const isChromeMobile = /Android.*Chrome\/[.0-9]*/.test(navigator.userAgent) ||
+    /iPhone.*CriOS\/[.0-9]*/.test(navigator.userAgent) ||
+    /iPad.*CriOS\/[.0-9]*/.test(navigator.userAgent);
+
 // Função para inicializar a página de relatórios
 function initializeReports() {
+    console.log("Inicializando relatórios...");
+    console.log("User Agent:", navigator.userAgent);
+    console.log("Chrome Mobile detectado:", isChromeMobile);
+
     // Configurar seletores de data
     setupDateSelectors();
 
     // Carregar dados
-    loadReportData();
+    if (isChromeMobile) {
+        // Solução específica para Chrome em dispositivos móveis
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') {
+                console.log("Página visível, recarregando dados");
+                loadReportData();
+            }
+        });
 
-    // Inicializar tabela
+        // Pequeno atraso para Chrome mobile
+        setTimeout(() => {
+            loadReportData();
+        }, 500);
+    } else {
+        // Carregamento normal para outros navegadores
+        loadReportData();
+    }
+
+    // Inicializar outras partes
     initTransactionsTable();
-
-    // Configurar botões de exportação
     setupExportButtons();
-
-    // Configurar mobile nav
     setupMobileNavigation();
 }
 
@@ -221,14 +241,62 @@ function createIncomeExpenseChart(transactions) {
     const expenseData = months.map(month => monthlyData[month].expenses);
 
     // Obter contexto do canvas
-    const ctx = document.getElementById('income-expense-chart').getContext('2d');
+    const canvas = document.getElementById('income-expense-chart');
+    if (!canvas) {
+        console.error("Canvas para gráfico não encontrado");
+        return;
+    }
+
+    // Verificar dimensões do canvas
+    if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+        console.log("Canvas com dimensão zero, adiando renderização");
+
+        // Para Chrome Mobile: tentar redimensionar o canvas
+        if (isChromeMobile) {
+            canvas.style.width = '100%';
+            canvas.style.height = '250px';
+
+            // Tentar novamente após um pequeno delay
+            setTimeout(() => createIncomeExpenseChart(transactions), 300);
+            return;
+        }
+    }
+
+    const ctx = canvas.getContext('2d');
 
     // Destruir gráfico anterior se existir
     if (window.incomeExpenseChart) {
         window.incomeExpenseChart.destroy();
     }
 
-    // Criar novo gráfico
+    // Criar novo gráfico com configurações otimizadas para mobile
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: isChromeMobile ? false : true, // Desabilitar animações no Chrome Mobile
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    maxTicksLimit: 5, // Menos marcações no eixo y para mobile
+                    callback: function (value) {
+                        return 'R$ ' + value;
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    maxTicksLimit: isChromeMobile ? 4 : 10 // Menos labels no eixo x para mobile
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: !isChromeMobile || window.innerWidth > 480 // Esconder legenda em telas muito pequenas
+            }
+        }
+    };
+
     window.incomeExpenseChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -250,20 +318,7 @@ function createIncomeExpenseChart(transactions) {
                 }
             ]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return 'R$ ' + value;
-                        }
-                    }
-                }
-            }
-        }
+        options: options
     });
 }
 
