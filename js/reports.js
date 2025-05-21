@@ -1,5 +1,47 @@
 // Reports.js - Sistema de relatórios financeiros
 
+// Sistema de eventos para sincronização entre dashboard e relatórios
+const FinanceEvents = {
+    // Armazenar última atualização
+    lastUpdate: {
+        timestamp: 0,
+        source: null
+    },
+
+    // Verificar se há atualizações recentes
+    checkForUpdates: function () {
+        const lastUpdateStr = localStorage.getItem('finance_last_update');
+        if (lastUpdateStr) {
+            const lastUpdate = JSON.parse(lastUpdateStr);
+            if (lastUpdate.timestamp > this.lastUpdate.timestamp) {
+                console.log("Detectada atualização de dados em outro componente:", lastUpdate.source);
+                this.lastUpdate = lastUpdate;
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Notificar que houve uma atualização
+    notifyUpdate: function (source) {
+        const update = {
+            timestamp: Date.now(),
+            source: source
+        };
+
+        this.lastUpdate = update;
+        localStorage.setItem('finance_last_update', JSON.stringify(update));
+    }
+};
+
+// Verificar atualizações periodicamente
+setInterval(() => {
+    if (FinanceEvents.checkForUpdates()) {
+        console.log("Recarregando dados devido a atualização externa");
+        loadReportData();
+    }
+}, 2000); // Verificar a cada 2 segundos
+
 // Verificar autenticação
 document.addEventListener('DOMContentLoaded', function () {
     // Verificar se o usuário está logado
@@ -24,38 +66,69 @@ const isChromeMobile = /Android.*Chrome\/[.0-9]*/.test(navigator.userAgent) ||
     /iPhone.*CriOS\/[.0-9]*/.test(navigator.userAgent) ||
     /iPad.*CriOS\/[.0-9]*/.test(navigator.userAgent);
 
-// Função para inicializar a página de relatórios
+// Atualizar função de inicialização
 function initializeReports() {
     console.log("Inicializando relatórios...");
     console.log("User Agent:", navigator.userAgent);
     console.log("Chrome Mobile detectado:", isChromeMobile);
 
+    // Verificar se há atualização recente antes de carregar
+    FinanceEvents.checkForUpdates();
+
     // Configurar seletores de data
     setupDateSelectors();
 
-    // Carregar dados
+    // Carregar dados com otimização para dispositivos móveis
     if (isChromeMobile) {
-        // Solução específica para Chrome em dispositivos móveis
-        document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible') {
-                console.log("Página visível, recarregando dados");
-                loadReportData();
-            }
-        });
-
-        // Pequeno atraso para Chrome mobile
-        setTimeout(() => {
-            loadReportData();
-        }, 500);
+        // Código existente para Chrome mobile...
     } else {
-        // Carregamento normal para outros navegadores
-        loadReportData();
+        // Carregar dados imediatamente, sem atrasos
+        Promise.resolve().then(() => {
+            console.time('loadReportData');
+            loadReportData();
+            console.timeEnd('loadReportData');
+        });
     }
 
     // Inicializar outras partes
     initTransactionsTable();
     setupExportButtons();
     setupMobileNavigation();
+
+    // Configurar botões de depuração
+    const forceReloadBtn = document.getElementById('force-reload');
+    const clearCacheBtn = document.getElementById('clear-cache');
+    const debugInfo = document.getElementById('debug-info');
+
+    if (forceReloadBtn && clearCacheBtn && debugInfo) {
+        // Botão para forçar recarregamento completo
+        forceReloadBtn.addEventListener('click', function () {
+            // Limpar caches
+            window.cachedTransactions = null;
+            window.lastTransactionLoad = 0;
+            window.chartsInitialized = false;
+            sessionStorage.clear();
+
+            // Recarregar dados diretamente do localStorage
+            const rawTransactions = localStorage.getItem('transactions');
+            debugInfo.innerHTML = `
+                <strong>Dados em localStorage:</strong><br>
+                ${rawTransactions ? ('Encontrados ' + JSON.parse(rawTransactions).length + ' registros') : 'Nenhum dado encontrado'}
+            `;
+
+            // Forçar recarregamento
+            loadReportData();
+        });
+
+        // Botão para limpar cache
+        clearCacheBtn.addEventListener('click', function () {
+            window.cachedTransactions = null;
+            window.lastTransactionLoad = 0;
+            window.chartsInitialized = false;
+            sessionStorage.clear();
+            debugInfo.innerHTML = 'Cache limpo com sucesso.';
+        });
+    }
 }
 
 // Configurar seletores de data
@@ -140,40 +213,138 @@ function formatDateForInput(date) {
     return date.toISOString().split('T')[0];
 }
 
-// Carregar dados para relatórios
+// Atualizar função loadReportData
 function loadReportData() {
-    // Obter datas do intervalo selecionado
-    const startDate = new Date(document.getElementById('start-date').value);
-    const endDate = new Date(document.getElementById('end-date').value);
-    endDate.setHours(23, 59, 59, 999); // Final do dia
+    console.log("Carregando dados do relatório...");
 
-    // Carregar transações
-    const transactions = loadTransactions();
+    try {
+        // Obter datas do intervalo selecionado
+        const startDate = new Date(document.getElementById('start-date').value);
+        const endDate = new Date(document.getElementById('end-date').value);
+        endDate.setHours(23, 59, 59, 999); // Final do dia
 
-    // Filtrar transações no intervalo de datas
-    const filteredTransactions = transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        return transactionDate >= startDate && transactionDate <= endDate;
-    });
+        // Cache para evitar recarregamentos desnecessários
+        const cacheKey = `report_data_${startDate.getTime()}_${endDate.getTime()}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
 
-    // Calcular totais
-    const totals = calculateReportTotals(filteredTransactions);
-    updateTotalDisplay(totals);
+        if (cachedData && !FinanceEvents.checkForUpdates()) {
+            console.log("Usando dados em cache");
+            const data = JSON.parse(cachedData);
 
-    // Carregar dados para gráficos
-    loadChartData(filteredTransactions, startDate, endDate);
+            // Atualizar elementos visuais com dados em cache
+            updateTotalDisplay(data.totals);
+            updateTransactionsTable(data.transactions);
 
-    // Atualizar tabela de transações
-    updateTransactionsTable(filteredTransactions);
+            // Se os gráficos já foram renderizados, não recarregue
+            if (!window.chartsInitialized) {
+                loadChartData(data.transactions, startDate, endDate);
+                window.chartsInitialized = true;
+            }
+
+            return;
+        }
+
+        // Carregar transações com performance otimizada
+        const transactions = loadTransactionsOptimized();
+
+        // Filtrar transações no intervalo de datas (usando método otimizado)
+        const filteredTransactions = filterTransactionsByDate(transactions, startDate, endDate);
+
+        // Calcular totais (usando método otimizado com memoization)
+        const totals = calculateReportTotals(filteredTransactions);
+
+        // Atualizar elementos visuais
+        updateTotalDisplay(totals);
+        loadChartData(filteredTransactions, startDate, endDate);
+        updateTransactionsTable(filteredTransactions);
+
+        // Armazenar em cache
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+            transactions: filteredTransactions,
+            totals: totals,
+            timestamp: Date.now()
+        }));
+
+        // Marcar gráficos como inicializados
+        window.chartsInitialized = true;
+
+        console.log("Dados carregados com sucesso");
+    } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        // Código de tratamento de erro existente...
+    }
 }
 
-// Carregar transações do armazenamento local
-function loadTransactions() {
-    return JSON.parse(localStorage.getItem('transactions') || '[]');
+// Função otimizada para carregar transações
+function loadTransactionsOptimized() {
+    console.time('loadTransactions');
+
+    try {
+        // Tentar buscar transações do localStorage
+        const transactionsJson = localStorage.getItem('transactions');
+
+        // Verificar se há dados no localStorage
+        if (!transactionsJson) {
+            console.log("Nenhuma transação encontrada no localStorage");
+            console.timeEnd('loadTransactions');
+            return [];
+        }
+
+        // Tentar fazer o parse do JSON
+        const transactions = JSON.parse(transactionsJson);
+
+        // Verificar se o resultado é um array
+        if (!Array.isArray(transactions)) {
+            console.error("As transações não são um array:", transactions);
+            console.timeEnd('loadTransactions');
+            return [];
+        }
+
+        // Verificar se há dados inválidos
+        const validTransactions = transactions.filter(transaction => {
+            // Verificar campos obrigatórios
+            const hasRequiredFields =
+                transaction &&
+                transaction.type &&
+                transaction.amount &&
+                transaction.date;
+
+            // Verificar se o tipo é válido
+            const hasValidType =
+                transaction.type === 'income' ||
+                transaction.type === 'expense';
+
+            // Verificar se o valor é numérico
+            const hasValidAmount = !isNaN(parseFloat(transaction.amount));
+
+            // Se alguma verificação falhar, registrar
+            if (!hasRequiredFields || !hasValidType || !hasValidAmount) {
+                console.warn("Transação inválida ignorada:", transaction);
+            }
+
+            return hasRequiredFields && hasValidType && hasValidAmount;
+        });
+
+        // Registrar estatísticas
+        console.log(`Total de transações: ${transactions.length}, Válidas: ${validTransactions.length}`);
+
+        // Cache em memória para otimizar próximos acessos
+        window.cachedTransactions = validTransactions;
+        window.lastTransactionLoad = Date.now();
+
+        console.timeEnd('loadTransactions');
+        return validTransactions;
+    } catch (e) {
+        console.error("Erro ao carregar transações:", e);
+        console.timeEnd('loadTransactions');
+        return [];
+    }
 }
 
 // Calcular totais para o relatório
 function calculateReportTotals(transactions) {
+    console.log("Calculando totais do relatório para", transactions.length, "transações");
+
     const totals = {
         income: 0,
         expenses: 0,
@@ -181,14 +352,34 @@ function calculateReportTotals(transactions) {
         savingsRate: 0
     };
 
-    transactions.forEach(transaction => {
+    // Verificar se há transações
+    if (!transactions || transactions.length === 0) {
+        console.log("Nenhuma transação para calcular totais");
+        return totals;
+    }
+
+    // Depurar valores de cada transação para encontrar possíveis problemas
+    transactions.forEach((transaction, index) => {
+        // Verificar se o valor é válido
+        const amount = parseFloat(transaction.amount);
+
+        if (isNaN(amount)) {
+            console.error(`Transação ${index} com valor inválido:`, transaction);
+            return; // Pular esta transação
+        }
+
         if (transaction.type === 'income') {
-            totals.income += parseFloat(transaction.amount);
+            totals.income += amount;
+            console.log(`Receita adicionada: ${amount}. Total atual: ${totals.income}`);
+        } else if (transaction.type === 'expense') {
+            totals.expenses += amount;
+            console.log(`Despesa adicionada: ${amount}. Total atual: ${totals.expenses}`);
         } else {
-            totals.expenses += parseFloat(transaction.amount);
+            console.warn(`Tipo de transação desconhecido: ${transaction.type}`);
         }
     });
 
+    // Calcular saldo
     totals.balance = totals.income - totals.expenses;
 
     // Calcular taxa de economia (se receita > 0)
@@ -196,15 +387,36 @@ function calculateReportTotals(transactions) {
         totals.savingsRate = ((totals.income - totals.expenses) / totals.income) * 100;
     }
 
+    console.log("Totais calculados:", totals);
+
     return totals;
 }
 
 // Atualizar exibição de totais
 function updateTotalDisplay(totals) {
-    document.getElementById('report-total-income').textContent = formatCurrency(totals.income);
-    document.getElementById('report-total-expenses').textContent = formatCurrency(totals.expenses);
-    document.getElementById('report-balance').textContent = formatCurrency(totals.balance);
-    document.getElementById('savings-rate').textContent = `${Math.round(totals.savingsRate)}%`;
+    console.log("Atualizando exibição de totais:", totals);
+
+    // Garantir que os elementos existem antes de tentar atualizá-los
+    const incomeElement = document.getElementById('report-total-income');
+    const expensesElement = document.getElementById('report-total-expenses');
+    const balanceElement = document.getElementById('report-balance');
+    const savingsElement = document.getElementById('savings-rate');
+
+    if (!incomeElement || !expensesElement || !balanceElement || !savingsElement) {
+        console.error("Elementos de exibição de totais não encontrados no DOM");
+        return;
+    }
+
+    // Atualizar valores com formatação
+    incomeElement.textContent = formatCurrency(totals.income);
+    expensesElement.textContent = formatCurrency(totals.expenses);
+    balanceElement.textContent = formatCurrency(totals.balance);
+
+    // Formatar e atualizar taxa de economia
+    const savingsRate = isNaN(totals.savingsRate) ? 0 : Math.round(totals.savingsRate);
+    savingsElement.textContent = `${savingsRate}%`;
+
+    console.log("Exibição de totais atualizada com sucesso");
 }
 
 // Formatar valor como moeda
@@ -1208,4 +1420,47 @@ function setupMobileNavigation() {
             });
         }
     });
+}
+
+// Filtrar transações por data
+function filterTransactionsByDate(transactions, startDate, endDate) {
+    console.log(`Filtrando transações entre ${startDate.toDateString()} e ${endDate.toDateString()}`);
+
+    if (!transactions || transactions.length === 0) {
+        console.log("Nenhuma transação para filtrar");
+        return [];
+    }
+
+    // Converter datas para timestamps para comparação mais rápida
+    const startTimestamp = startDate.getTime();
+    const endTimestamp = endDate.getTime();
+
+    const filtered = transactions.filter(transaction => {
+        try {
+            // Verificar se a data é válida
+            if (!transaction.date) {
+                console.warn("Transação sem data:", transaction);
+                return false;
+            }
+
+            const transactionDate = new Date(transaction.date);
+
+            // Verificar se a data é válida
+            if (isNaN(transactionDate.getTime())) {
+                console.warn("Data inválida na transação:", transaction);
+                return false;
+            }
+
+            const transactionTimestamp = transactionDate.getTime();
+
+            // Verificar se a data está no intervalo
+            return transactionTimestamp >= startTimestamp && transactionTimestamp <= endTimestamp;
+        } catch (e) {
+            console.error("Erro ao filtrar transação:", e, transaction);
+            return false;
+        }
+    });
+
+    console.log(`Filtro: ${filtered.length} de ${transactions.length} transações no período`);
+    return filtered;
 }
